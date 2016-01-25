@@ -1,0 +1,2 @@
+# allow startup script to re-exec itself via "sudo -g docker ..."
+ALL ALL=(:docker) SETENV: NOPASSWD: /usr/bin/google-chrome-docker *

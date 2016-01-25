@@ -1,0 +1,32 @@
+#!/bin/bash
+
+case "$DISPLAY" in
+:*) ;;
+*) echo >&2 "DISPLAY is not set to a local socket X11 display"; exit 1;;
+esac
+
+username="$(id -un)"
+
+docker_args="$(for v in DBUS_SESSION_BUS_ADDRESS DISPLAY SESSION_MANAGER \
+		SOCKS_SERVER XDG_CURRENT_DESKTOP XDG_RUNTIME_DIR \
+		all_proxy http_proxy https_proxy ftp_proxy auto_proxy no_proxy; do \
+			eval test ! -z "\${$v:-}" && \
+			eval printf -- \'-e %s=%q \' $v \$$v; \
+		done)"
+
+chrome_args="$(printf '%q ' "$@")"
+
+set -x
+exec sudo docker run -ti --rm \
+	--name "google-chrome_${username}_$$_$RANDOM" \
+	-h "$(hostname)-chrome" \
+	-v "$HOME:$HOME" \
+	-v /etc/machine-id:/etc/machine-id \
+	-v /dev/shm:/dev/shm -v /tmp:/tmp -v /var/tmp:/var/tmp \
+	-v /var/run:/run -v /var/run:/var/run \
+	$docker_args \
+	google-chrome:stable bash -c "
+		for n in $(id -G); do echo grp_\$n:x:\$n: >>/etc/group; done
+		useradd -M -s /bin/bash -d '$HOME' -u $(id -u) -g $(id -g) -G $(id -G|tr ' ' ,) '$(id -un)'
+		cd '$HOME'
+		exec sudo -EHnu '$(id -un)' google-chrome $chrome_args"
