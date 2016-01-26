@@ -16,8 +16,7 @@ docker_args="$(for v in DBUS_SESSION_BUS_ADDRESS DISPLAY SESSION_MANAGER \
 
 chrome_args="$(printf '%q ' "$@")"
 
-set -x
-exec sudo docker run -ti --rm \
+exec sudo docker run --rm \
 	--name "google-chrome_${username}_$$_$RANDOM" \
 	-h "$(hostname)-chrome" \
 	-v "$HOME:$HOME" \
